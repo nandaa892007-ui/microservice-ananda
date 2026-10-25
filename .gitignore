@@ -1,0 +1,22 @@
+# Secrets / environment
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Dependencies
+vendor/
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+# Logs, cache & OS files
+*.log
+.phpunit.result.cache
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
