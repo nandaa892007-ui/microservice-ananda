@@ -63,4 +63,36 @@ class ExampleTest extends TestCase
 
         $response->assertStatus(404);
     }
+
+    /**
+     * Test ambil daftar pesanan user mengembalikan status 200.
+     */
+    public function test_get_user_orders_returns_200(): void
+    {
+        $response = $this->getJson('/orders/user/7');
+
+        $response->assertStatus(200)
+                 ->assertJson([
+                     'message' => 'Berhasil mengambil daftar pesanan',
+                     'data' => [],
+                 ]);
+    }
+
+    /**
+     * Test filter status tidak valid pada daftar pesanan user mengembalikan 422.
+     */
+    public function test_get_user_orders_with_invalid_status_returns_422(): void
+    {
+        $response = $this->getJson('/orders/user/7?status=SHIPPED');
+
+        $response->assertStatus(422)
+                 ->assertJson([
+                     'message' => 'Data yang dikirim tidak valid',
+                     'errors' => [
+                         'status' => [
+                             'Status harus PENDING atau PAID',
+                         ],
+                     ],
+                 ]);
+    }
 }

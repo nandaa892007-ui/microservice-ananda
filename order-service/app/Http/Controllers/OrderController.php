@@ -7,6 +7,7 @@ use App\Exceptions\InsufficientStockException;
 use App\Exceptions\OrderNotFoundException;
 use App\Exceptions\ProductNotFoundException;
 use App\Exceptions\ServiceUnavailableException;
+use App\Http\Requests\ListUserOrdersRequest;
 use App\Http\Requests\StoreOrderRequest;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
@@ -22,13 +23,6 @@ class OrderController extends Controller
     /**
      * Endpoint checkout: POST /orders
      * Mengubah isi keranjang belanja user menjadi pesanan baru.
-     *
-     * Respon sukses: HTTP 201 dengan data pesanan & items snapshot
-     * Respon gagal:
-     * - 422: Validasi body gagal (misal user_id kosong)
-     * - 409: Keranjang kosong, produk tidak ada di katalog, atau stok kurang
-     * - 503: Cart-service atau product-service tidak dapat dihubungi
-     * - 500: Error tak terduga pada server
      */
     public function store(StoreOrderRequest $request): JsonResponse
     {
@@ -66,11 +60,6 @@ class OrderController extends Controller
     /**
      * Endpoint detail pesanan: GET /orders/{id}
      * Menampilkan detail satu pesanan beserta relasi item-itemnya.
-     *
-     * Respon sukses: HTTP 200
-     * Respon gagal:
-     * - 404: Pesanan tidak ditemukan atau ID bukan angka
-     * - 500: Error tak terduga pada server
      */
     public function show(int $id): JsonResponse
     {
@@ -89,6 +78,32 @@ class OrderController extends Controller
 
         } catch (Throwable $e) {
             return $this->serverErrorResponse($e, 'mengambil pesanan');
+        }
+    }
+
+    /**
+     * Endpoint daftar pesanan satu user: GET /orders/user/{userId}
+     * Menampilkan riwayat pesanan milik user (terbaru di atas) dengan filter opsional ?status=.
+     *
+     * Respon sukses: HTTP 200
+     * Respon gagal:
+     * - 422: Nilai status tidak valid (bukan PENDING atau PAID)
+     * - 404: userId di path bukan angka
+     * - 500: Error tak terduga pada server
+     */
+    public function userOrders(ListUserOrdersRequest $request, int $userId): JsonResponse
+    {
+        try {
+            $status = $request->query('status');
+            $orders = $this->orderService->getUserOrders($userId, $status);
+
+            return response()->json([
+                'message' => 'Berhasil mengambil daftar pesanan',
+                'data' => $orders,
+            ], 200);
+
+        } catch (Throwable $e) {
+            return $this->serverErrorResponse($e, 'mengambil daftar pesanan');
         }
     }
 
