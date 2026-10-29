@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\EmptyCartException;
 use App\Exceptions\InsufficientStockException;
+use App\Exceptions\InvalidOrderStatusException;
 use App\Exceptions\OrderNotFoundException;
 use App\Exceptions\ProductNotFoundException;
 use App\Exceptions\ServiceUnavailableException;
@@ -84,12 +85,6 @@ class OrderController extends Controller
     /**
      * Endpoint daftar pesanan satu user: GET /orders/user/{userId}
      * Menampilkan riwayat pesanan milik user (terbaru di atas) dengan filter opsional ?status=.
-     *
-     * Respon sukses: HTTP 200
-     * Respon gagal:
-     * - 422: Nilai status tidak valid (bukan PENDING atau PAID)
-     * - 404: userId di path bukan angka
-     * - 500: Error tak terduga pada server
      */
     public function userOrders(ListUserOrdersRequest $request, int $userId): JsonResponse
     {
@@ -104,6 +99,41 @@ class OrderController extends Controller
 
         } catch (Throwable $e) {
             return $this->serverErrorResponse($e, 'mengambil daftar pesanan');
+        }
+    }
+
+    /**
+     * Endpoint simulasi pembayaran: PATCH /orders/{id}/pay
+     * Mengubah status pesanan dari PENDING menjadi PAID.
+     *
+     * Respon sukses: HTTP 200 {"message": "Pesanan berhasil dibayar", "data": {...}}
+     * Respon gagal:
+     * - 404: Pesanan tidak ditemukan atau ID bukan angka
+     * - 409: Status bukan PENDING (sudah dibayar)
+     * - 500: Error tak terduga pada server
+     */
+    public function pay(int $id): JsonResponse
+    {
+        try {
+            $order = $this->orderService->payOrder($id);
+
+            return response()->json([
+                'message' => 'Pesanan berhasil dibayar',
+                'data' => $order,
+            ], 200);
+
+        } catch (OrderNotFoundException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 404);
+
+        } catch (InvalidOrderStatusException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 409);
+
+        } catch (Throwable $e) {
+            return $this->serverErrorResponse($e, 'memproses pembayaran');
         }
     }
 

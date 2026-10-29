@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -93,6 +94,61 @@ class ExampleTest extends TestCase
                              'Status harus PENDING atau PAID',
                          ],
                      ],
+                 ]);
+    }
+
+    /**
+     * Test bayar pesanan yang tidak ditemukan mengembalikan 404.
+     */
+    public function test_pay_order_returns_404_when_not_found(): void
+    {
+        $response = $this->patchJson('/orders/99999/pay');
+
+        $response->assertStatus(404)
+                 ->assertJson([
+                     'message' => 'Pesanan dengan id 99999 tidak ditemukan',
+                 ]);
+    }
+
+    /**
+     * Test bayar pesanan sukses mengubah status menjadi PAID (200).
+     */
+    public function test_pay_order_success_changes_status_to_paid(): void
+    {
+        $order = Order::create([
+            'user_id' => 7,
+            'status' => Order::STATUS_PENDING,
+            'total_amount' => 150000,
+        ]);
+
+        $response = $this->patchJson("/orders/{$order->id}/pay");
+
+        $response->assertStatus(200)
+                 ->assertJson([
+                     'message' => 'Pesanan berhasil dibayar',
+                     'data' => [
+                         'id' => $order->id,
+                         'status' => 'PAID',
+                     ],
+                 ]);
+    }
+
+    /**
+     * Test bayar pesanan yang sudah PAID mengembalikan 409.
+     */
+    public function test_pay_order_already_paid_returns_409(): void
+    {
+        $order = Order::create([
+            'user_id' => 7,
+            'status' => Order::STATUS_PAID,
+            'total_amount' => 150000,
+        ]);
+
+        $response = $this->patchJson("/orders/{$order->id}/pay");
+
+        $response->assertStatus(409)
+                 ->assertJson([
+                     'message' => 'Pesanan berstatus PAID, hanya pesanan PENDING yang dapat dibayar',
                  ]);
     }
 }

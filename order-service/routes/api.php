@@ -15,3 +15,6 @@ Route::get('/orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
 
 // Endpoint daftar pesanan satu user
 Route::get('/orders/user/{userId}', [OrderController::class, 'userOrders'])->whereNumber('userId');
+
+// Endpoint simulasi bayar pesanan
+Route::patch('/orders/{id}/pay', [OrderController::class, 'pay'])->whereNumber('id');
