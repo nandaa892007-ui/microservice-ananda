@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\EmptyCartException;
 use App\Exceptions\InsufficientStockException;
+use App\Exceptions\OrderNotFoundException;
 use App\Exceptions\ProductNotFoundException;
 use App\Exceptions\ServiceUnavailableException;
 use App\Http\Requests\StoreOrderRequest;
@@ -59,6 +60,35 @@ class OrderController extends Controller
 
         } catch (Throwable $e) {
             return $this->serverErrorResponse($e, 'membuat pesanan');
+        }
+    }
+
+    /**
+     * Endpoint detail pesanan: GET /orders/{id}
+     * Menampilkan detail satu pesanan beserta relasi item-itemnya.
+     *
+     * Respon sukses: HTTP 200
+     * Respon gagal:
+     * - 404: Pesanan tidak ditemukan atau ID bukan angka
+     * - 500: Error tak terduga pada server
+     */
+    public function show(int $id): JsonResponse
+    {
+        try {
+            $order = $this->orderService->getOrder($id);
+
+            return response()->json([
+                'message' => 'Berhasil mengambil pesanan',
+                'data' => $order,
+            ], 200);
+
+        } catch (OrderNotFoundException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 404);
+
+        } catch (Throwable $e) {
+            return $this->serverErrorResponse($e, 'mengambil pesanan');
         }
     }
 

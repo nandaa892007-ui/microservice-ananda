@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * Test endpoint health check order-service.
      */
@@ -36,5 +39,28 @@ class ExampleTest extends TestCase
                          ],
                      ],
                  ]);
+    }
+
+    /**
+     * Test ambil detail pesanan yang tidak ditemukan mengembalikan 404.
+     */
+    public function test_get_order_detail_returns_404_when_not_found(): void
+    {
+        $response = $this->getJson('/orders/99999');
+
+        $response->assertStatus(404)
+                 ->assertJson([
+                     'message' => 'Pesanan dengan id 99999 tidak ditemukan',
+                 ]);
+    }
+
+    /**
+     * Test ambil detail pesanan dengan ID bukan angka mengembalikan 404.
+     */
+    public function test_get_order_detail_returns_404_when_id_is_not_numeric(): void
+    {
+        $response = $this->getJson('/orders/invalid-id');
+
+        $response->assertStatus(404);
     }
 }

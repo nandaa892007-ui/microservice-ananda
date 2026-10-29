@@ -9,3 +9,6 @@ Route::get('/health', [HealthController::class, 'index']);
 
 // Endpoint checkout pesanan
 Route::post('/orders', [OrderController::class, 'store']);
+
+// Endpoint detail satu pesanan
+Route::get('/orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
